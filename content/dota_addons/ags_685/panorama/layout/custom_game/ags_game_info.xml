@@ -1,0 +1,26 @@
+<root>
+	<styles>
+		<include src="file://{resources}/styles/dotastyles.css" />
+		<include src="file://{resources}/styles/custom_game/overthrow_game_info.css" />
+	</styles>
+	<Panel class="OverthrowGameInfo">
+		<Panel id="Title">
+			<Label id="TitleName" text="#addon_game_name" />
+		</Panel>
+		<Label id="ObjectiveHeader" class="Header" html="true" text="#addon_game_info_feature_header" />
+		<Label id="BriefDescription" text="#addon_game_info_feature" />
+		<Label id="RecommendHeader" class="Header" html="true" text="#addon_game_info_recommend_header" />
+		<Label id="Recommend" text="#addon_game_info_recommend" />	
+		<Label id="IntroductionHeader" class="Header" html="true" text="#addon_game_info_introduction_header" />
+		<Label id="Introduction" text="#addon_game_info_introduction" />
+		<Label id="TipsHeader" class="Header" html="true" text="#addon_game_info_tips_header" />
+		<Panel id="TipsRow" class="InfoRow">
+			<Label id="TipText01" class="TipText" html="true" text="#addon_game_info_tips_01" />
+			<Label id="TipText02" class="TipText" html="true" text="#addon_game_info_tips_02" />
+			<Label id="TipText03" class="TipText" html="true" text="#addon_game_info_tips_03" />
+			<Label id="TipText04" class="TipText" html="true" text="#addon_game_info_tips_04" />
+			<Label id="TipText05" class="TipText" html="true" text="#addon_game_info_tips_05" />
+		</Panel>
+	</Panel>
+</root>
+
