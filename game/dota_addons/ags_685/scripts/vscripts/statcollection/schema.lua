@@ -41,10 +41,11 @@ end
 -- Returns a table with our custom game tracking.
 function BuildGameArray()
     local game = {}
-    	game.len = GameRules:GetGameTime()
-			game.win = _G.GAME_WINNER_TEAM
+    
     -- Add game values here as game.someValue = GetSomeGameValue()
-
+    game.len = GameRules:GetGameTime()
+    game.win = _G.GAME_WINNER_TEAM
+    
     return game
 end
 
@@ -56,30 +57,28 @@ function BuildPlayersArray()
             if not PlayerResource:IsBroadcaster(playerID) then
 
                 local hero = PlayerResource:GetSelectedHeroEntity(playerID)
-								local heroTeam = PlayerResource:GetTeam(playerID)
-								local heroTeamStr = ""
-								if heroTeam == 2 then
-									heroTeamStr = "Radiant"
-								elseif heroTeam == 3 then
-									heroTeamStr = "Dire"
-								end
-								--print(heroTeam)
-								--print(heroTeamStr)
+                local heroTeam = PlayerResource:GetTeam(playerID)
+                local heroTeamStr = ""
+                	if heroTeam == 2 then
+                		heroTeamStr = "Radiant"
+                	elseif heroTeam == 3 then
+                		heroTeamStr = "Dire"
+                	end
+
                 table.insert(players, {
                     -- steamID32 required in here
                     steamID32 = PlayerResource:GetSteamAccountID(playerID),
-										nam= GetHeroName(playerID),	-- Hero by its short name
-										lvl = hero:GetLevel(),			-- Hero level at the end of the game
-										pnw = GetNetworth(hero),		-- Sum of hero gold and item worth
-										pt = heroTeamStr,				-- Team this hero belongs to
-										pk = hero:GetKills(),			-- Number of kills of this players hero
-										pa = hero:GetAssists(),			-- Number of deaths of this players hero
-										pd = hero:GetDeaths(),			-- Number of deaths of this players hero
-										pil = GetItemList(hero)			-- Item list
 
                     -- Example functions for generic stats are defined in statcollection/lib/utilities.lua
                     -- Add player values here as someValue = GetSomePlayerValue(),
-
+                    nam= GetHeroName(playerID),			-- Hero by its short name
+                    lvl = hero:GetLevel(),			-- Hero level at the end of the game
+                    pnw = GetNetworth(hero),			-- Sum of hero gold and item worth
+                    pt = heroTeamStr,				-- Team this hero belongs to
+                    pk = hero:GetKills(),			-- Number of kills of this players hero
+                    pa = hero:GetAssists(),			-- Number of deaths of this players hero
+                    pd = hero:GetDeaths(),			-- Number of deaths of this players hero
+                    pil = GetItemList(hero)			-- Item list
                 })
             end
         end
