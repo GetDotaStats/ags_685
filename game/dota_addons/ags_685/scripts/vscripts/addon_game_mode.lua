@@ -1,4 +1,11 @@
--- Generated from template
+--[[
+Author, 作者: Tim the hexed
+mod link, 地圖鏈接: http://steamcommunity.com/sharedfiles/filedetails/?id=466843568
+This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 International License. To view a copy of this license,
+visit http://creativecommons.org/licenses/by-sa/4.0/.
+本著作以創用CC 姓名標示-相同方式分享 4.0 國際 授權條款釋出。詳細授權條款，
+請至http://creativecommons.org/licenses/by-sa/4.0/ 。
+]]
 
 require('settings')
 require('notifications')
