@@ -42,11 +42,15 @@ end
 function BuildGameArray()
     local game = {}
 <<<<<<< HEAD
+<<<<<<< HEAD
     	game.len = math.floor(GameRules:GetGameTime())
 			game.win = _G.GAME_WINNER_TEAM
 =======
     
 >>>>>>> 84e5336ef0f203c7008884d5da9266feb75dca63
+=======
+    
+>>>>>>> origin/master
     -- Add game values here as game.someValue = GetSomeGameValue()
     game.len = GameRules:GetGameTime()
     game.win = _G.GAME_WINNER_TEAM
