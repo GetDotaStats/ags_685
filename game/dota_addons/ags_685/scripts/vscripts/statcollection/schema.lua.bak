@@ -63,8 +63,8 @@ function BuildPlayersArray()
 								elseif heroTeam == 3 then
 									heroTeamStr = "Dire"
 								end
-								print(heroTeam)
-								print(heroTeamStr)
+								--print(heroTeam)
+								--print(heroTeamStr)
                 table.insert(players, {
                     -- steamID32 required in here
                     steamID32 = PlayerResource:GetSteamAccountID(playerID),

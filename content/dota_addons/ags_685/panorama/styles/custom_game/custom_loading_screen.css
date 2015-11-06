@@ -30,6 +30,23 @@
   text-shadow: 2px 2px 2px #000000;
 }
 
+#CreditPanel
+{
+  horizontal-align: left;
+  margin-top: -200px;
+  margin-left: 600px;
+	flow-children: down;
+ 	vertical-align: center;
+  font-size: 30px;
+  color: #cccccc;
+  text-shadow: 2px 2px 2px #000000;
+}
+
+.CreditPanelSub
+{
+	flow-children: right;
+}
+
 .SeqImg
 {
   background-repeat: no-repeat;
@@ -40,7 +57,7 @@
 #CustomBg
 {
 
-  margin-top: 350px;
+  margin-top: 300px;
     overflow: clip;
   pre-transform-scale2d: 1.0;
   animation-name: gamemode_anim;
@@ -52,7 +69,7 @@
 
 #gamemode
 {
-  margin-left: 160px;
+  margin-left: 50px;
   /*margin-bottom: 0px;*/
   
 }

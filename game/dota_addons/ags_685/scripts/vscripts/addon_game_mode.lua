@@ -4,8 +4,7 @@ require('settings')
 require('notifications')
 require('storageapi/json')
 require('storageapi/storage')
-require("statcollection/init")
-
+require('statcollection/init')
 
 if CagsGameMode == nil then
 	CagsGameMode = class({})
@@ -49,7 +48,6 @@ function CagsGameMode:InitGameMode()
 	PlayerRandom = {false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false}
 	PlayerRepick = {false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false}
   PlayerAbandon = {false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false}
-  AbandonTest = {false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false}
 	PlayerTeam = {}
 	PlayerIDtoHeroIndex = {}
 	PlayerStorage = {}
@@ -64,20 +62,44 @@ function CagsGameMode:InitGameMode()
 	GameRules:GetGameModeEntity():SetThink( "HeroSelectionThink", self, "HST")
 	GameRules:GetGameModeEntity():SetThink( "AbandonCheckThink", self, "ACT")
 	GameRules:GetGameModeEntity():SetThink( "AbandonReimburseThink", self, "ART")
+	
+	GameRules:SetCustomGameSetupAutoLaunchDelay(10)
 	GameRules:GetGameModeEntity():SetLoseGoldOnDeath( false )
+	GameRules:SetUseUniversalShopMode( true )
 	GameRules:GetGameModeEntity():SetTopBarTeamValuesOverride ( true )
 	GameRules:GetGameModeEntity():SetTopBarTeamValue(DOTA_TEAM_GOODGUYS,RadiantScore)
 	GameRules:GetGameModeEntity():SetTopBarTeamValue(DOTA_TEAM_BADGUYS,DireScore)
 	
+	ListenToGameEvent( "player_connect", Dynamic_Wrap( CagsGameMode, 'OnPlayerConnect' ), self )
 	ListenToGameEvent( "game_rules_state_change", Dynamic_Wrap( CagsGameMode, 'OnStateChange' ), self )
 	ListenToGameEvent( "dota_player_pick_hero", Dynamic_Wrap( CagsGameMode, 'OnHeroPicked' ), self )
 	ListenToGameEvent( "npc_spawned", Dynamic_Wrap( CagsGameMode, 'OnNpcSpawned' ), self )
 	ListenToGameEvent( "dota_player_used_ability", Dynamic_Wrap( CagsGameMode, 'OnPlayerUseAbility' ), self )
 	ListenToGameEvent( "entity_hurt", Dynamic_Wrap( CagsGameMode, 'OnEntityHurt' ), self )
 	ListenToGameEvent( "entity_killed", Dynamic_Wrap( CagsGameMode, 'OnEntityKilled' ), self )
+  ListenToGameEvent( "player_chat", Dynamic_Wrap( CagsGameMode, "OnPlayerSay"), self)
 	ListenToGameEvent( "player_score", Dynamic_Wrap( CagsGameMode, 'OnScoreChanged' ), self )
 	ListenToGameEvent( "player_disconnect", Dynamic_Wrap( CagsGameMode, 'OnPlayerDisconnect' ), self )
 	ListenToGameEvent( "game_end", Dynamic_Wrap( CagsGameMode, 'OnGameEnd' ), self )
+	
+	CustomGameEventManager:RegisterListener( "myui_open", OnMyUIOpen )
+  CustomGameEventManager:RegisterListener( "js_to_lua", OnJsToLua )
+  CustomGameEventManager:RegisterListener( "lua_to_js", OnLuaToJs )
+
+end
+
+function OnMyUIOpen( index,keys )
+         CustomUI:DynamicHud_Create(keys.PlayerID,"MyUIMain","file://{resources}/layout/custom_game/rank_info_main.xml",nil)
+end
+
+function OnJsToLua( index,keys )
+         print("num:"..keys.num.." str:"..tostring(keys.str))
+         CustomUI:DynamicHud_Destroy(keys.PlayerID,"MyUIMain")
+end
+  
+function OnLuaToJs( index,keys )
+         CustomGameEventManager:Send_ServerToPlayer( PlayerResource:GetPlayer(keys.PlayerID), "on_lua_to_js", {str="Lua"} )
+         CustomUI:DynamicHud_Destroy(keys.PlayerID,"MyUIMain")
 end
 
 function CagsGameMode:HeroSelectionThink()
@@ -122,7 +144,7 @@ function CagsGameMode:AbandonCheckThink()
 	]]
 	if GameRules:State_Get()>=DOTA_GAMERULES_STATE_STRATEGY_TIME then
 		for i = 0, 31 do
-			if ((PlayerResource:GetConnectionState(i)==DOTA_CONNECTION_STATE_ABANDONED)or(AbandonTest[i+1])) and (PlayerAbandon[i+1]==false) and ((PlayerTeam[i+1]==2)or(PlayerTeam[i+1]==3)) then
+			if ((PlayerResource:GetConnectionState(i)==DOTA_CONNECTION_STATE_ABANDONED)or(_G.AbandonTest[i+1])) and (PlayerAbandon[i+1]==false) and ((PlayerTeam[i+1]==2)or(PlayerTeam[i+1]==3)) then
 				PlayerAbandon[i+1]=true
 				if PlayerTeam[i+1]==2 then
 					GCMulti = GoldCoef[RadiantPlayersNow]
@@ -144,7 +166,7 @@ function CagsGameMode:AbandonCheckThink()
 						end
 					end				
 					PlayerResource:ModifyGold(i,math.floor(ItemCosti/2), false, 0)
-					GameRules:SendCustomMessage("%s1 abandoned. All radiant players' gold, GPM and respawn speed become "..((math.floor(RadiantGC*100))/100).."x.", i, 0)				
+					--GameRules:SendCustomMessage("%s1 abandoned. All radiant players' gold, GPM and respawn speed become "..((math.floor(RadiantGC*100))/100).."x.", i, 0)				
   				Notifications:BottomToAll({hero=PlayerResource:GetSelectedHeroName(i), imagestyle="landscape", duration=10.0})
   				Notifications:BottomToAll({text="#addon_abandon_radiant_01", continue=true, style={["font-size"]="30px"}})
   				Notifications:BottomToAll({text=""..((math.floor(RadiantGC*100))/100), continue=true, style={["font-size"]="30px"}})
@@ -170,7 +192,7 @@ function CagsGameMode:AbandonCheckThink()
 						end
 					end				
 					PlayerResource:ModifyGold(i,math.floor(ItemCosti/2), false, 0)
-					GameRules:SendCustomMessage("%s1 abandoned. All dire players' gold, GPM and respawn speed "..((math.floor(DireGC*100))/100).."x.", i, 0)				
+					--GameRules:SendCustomMessage("%s1 abandoned. All dire players' gold, GPM and respawn speed "..((math.floor(DireGC*100))/100).."x.", i, 0)				
   				Notifications:BottomToAll({hero=PlayerResource:GetSelectedHeroName(i), imagestyle="landscape", duration=10.0})
   				Notifications:BottomToAll({text="#addon_abandon_dire_01", continue=true, style={["font-size"]="30px"}})
   				Notifications:BottomToAll({text=""..((math.floor(DireGC*100))/100), continue=true, style={["font-size"]="30px"}})
@@ -194,6 +216,7 @@ function CagsGameMode:AbandonReimburseThink()
 			if PlayerTeam[i+1]==2 then
 				PlayerResource:ModifyGold(i,math.floor(10*(10/(RadiantPlayers+DirePlayers))^1.5*(RadiantGC-1)), false, 0)
 				if PlayerAbandon[i+1] then
+					PlayerResource:ModifyGold(i,math.floor(10*(10/(RadiantPlayers+DirePlayers))^1.5*RadiantGC), false, 0)
 					RadiantGoldReim = RadiantGoldReim + PlayerResource:GetGold(i)
 					PlayerResource:SetGold(i,0,false)
 					PlayerResource:SetGold(i,0,true)
@@ -202,6 +225,7 @@ function CagsGameMode:AbandonReimburseThink()
 			if PlayerTeam[i+1]==3 then
 				PlayerResource:ModifyGold(i,math.floor(10*(10/(RadiantPlayers+DirePlayers))^1.5*(DireGC-1)), false, 0)
 				if PlayerAbandon[i+1] then
+					PlayerResource:ModifyGold(i,math.floor(10*(10/(RadiantPlayers+DirePlayers))^1.5*DireGC), false, 0)
 					DireGoldReim = DireGoldReim + PlayerResource:GetGold(i)
 					PlayerResource:SetGold(i,0,false)
 					PlayerResource:SetGold(i,0,true)
@@ -228,9 +252,15 @@ function CagsGameMode:AbandonReimburseThink()
 	return 6
 end
 
+function CagsGameMode:OnPlayerConnect( event )
+	--DeepPrintTable(event)
+end
+
 function CagsGameMode:OnStateChange( event )
 	--print(GameRules:State_Get())
 	if GameRules:State_Get() == DOTA_GAMERULES_STATE_HERO_SELECTION then
+		CustomUI:DynamicHud_Create(-1,nil,"file://{resources}/layout/custom_game/barebones_notifications.xml",nil)
+		--CustomUI:DynamicHud_Create(-1,"MyUIButton","file://{resources}/layout/custom_game/rank_info.xml",nil)
 		for i = 0, 31 do
 			PlayerTeam[i+1] = PlayerResource:GetTeam(i)
 			--print(PlayerTeam[i+1])
@@ -258,21 +288,63 @@ function CagsGameMode:OnStateChange( event )
 		--print(DirePlayers)
 		--print(FewPlayer)
 	end
-	if (GameRules:State_Get() == DOTA_GAMERULES_STATE_PRE_GAME)and(DruidExist) then
-		GameRules:GetGameModeEntity():SetThink( "DruidSellableThink", self, "DST", 11)	
-	end
 	if GameRules:State_Get() == DOTA_GAMERULES_STATE_PRE_GAME then
+		GameRules:GetGameModeEntity():SetThink( "DruidSellableThink", self, "DST", 11)	
 		if (WinStreakBroadcast) then
+			CagsGameMode:EloCalc()
 			for i = 0,31 do
 				if (PlayerTeam[i+1]==2) or (PlayerTeam[i+1]==3) then
 					CagsGameMode:WinStreakBC(i)
 				end
 			end
+			CagsGameMode:EloOverallBC()
 			WinStreakBroadcast = false
+		end
+	end
+	if GameRules:State_Get() == DOTA_GAMERULES_STATE_GAME_IN_PROGRESS then
+		if IsDedicatedServer() == false then
+			for i = 0, 31 do
+				if PlayerResource:IsValidPlayerID(i) then
+					if GameRules:PlayerHasCustomGameHostPrivileges(PlayerResource:GetPlayer(i)) then 
+						Notifications:TopToAll({text=PlayerResource:GetPlayerName(i).." ", duration=20.0, style={color="orange", ["font-size"]="30px"}})		
+						Notifications:TopToAll({text="#addon_host_hint", duration=20.0, style={color="orange", ["font-size"]="30px"}})
+						PlayerHost = i
+						PlayerHostTeam = PlayerTeam[i+1]
+						if WinStreakRecord then
+
+							RadiantEloDeltaSav = RadiantEloDelta
+							DireEloDeltaSav = DireEloDelta						
+							if PlayerHostTeam==2 then
+								CagsGameMode:EloChange(PlayerHost,-DireEloDeltaSav*5)
+								CagsGameMode:StoragePut(PlayerHost)
+								DeepPrintTable(PlayerStorage[PlayerHost+1])
+								for j = 0, 31 do
+									if PlayerTeam[j+1]==3 then
+										CagsGameMode:EloChange(j,DireEloDeltaSav)	
+										CagsGameMode:StoragePut(j)
+									end			
+								end		
+							elseif PlayerHostTeam==3 then
+								CagsGameMode:EloChange(PlayerHost,-RadiantEloDeltaSav*5)
+								CagsGameMode:StoragePut(PlayerHost)
+								for j = 0, 31 do
+									if PlayerTeam[j+1]==2 then
+										CagsGameMode:EloChange(j,RadiantEloDeltaSav)	
+										CagsGameMode:StoragePut(j)
+									end			
+								end		
+							end
+							
+						end
+					end
+				end
+			end		
 		end
 	end
 	if GameRules:State_Get() == DOTA_GAMERULES_STATE_POST_GAME then
 		if WinStreakRecord then
+		
+							
 			for i = 0, 31 do
 				if (PlayerTeam[i+1]==2) or (PlayerTeam[i+1]==3) then
 					CagsGameMode:StoragePut(i)
@@ -282,6 +354,53 @@ function CagsGameMode:OnStateChange( event )
 			end
 		end
 	end
+end
+
+function CagsGameMode:EloCalc()
+		RadiantElo = 0
+		DireElo = 0
+		for i = 0, 31 do
+			if (PlayerTeam[i+1] == 2) then
+				RadiantElo = RadiantElo + PlayerStorage[i+1]["Elo"]^2
+			end
+			if (PlayerTeam[i+1] == 3) then
+				DireElo = DireElo + PlayerStorage[i+1]["Elo"]^2
+			end	
+		end
+		if RadiantPlayers==0 then
+			RadiantElo = 1000
+		else
+			RadiantElo = (RadiantElo/RadiantPlayers)^0.5
+		end
+		if DirePlayers==0 then
+			DireElo = 1000
+		else
+			DireElo = (DireElo/DirePlayers)^0.5
+		end
+		RadiantEXWin = 1/(1+10^((DireElo-RadiantElo)/400))
+		DireEXWin = 1/(1+10^((RadiantElo-DireElo)/400))	
+		RadiantEloDelta = 20 * (1-RadiantEXWin)
+		DireEloDelta = 20 * (1-DireEXWin)		
+end
+
+function CagsGameMode:EloOverallBC()
+	Say(nil, "Radiant avg rank: "..math.floor(RadiantElo).."; Dire avg rank: "..math.floor(DireElo).."; Radiant Winrate: "..(math.floor(RadiantEXWin*1000)/10).."%; Dire Winrate: "..(math.floor(DireEXWin*1000)/10).."%; Rank change if Radiant win: "..(math.floor(RadiantEloDelta*10)/10).."; Rank change if Dire win: "..(math.floor(DireEloDelta*10)/10), false)
+	
+	Notifications:TopToAll({text="#addon_radiant_avg_rank", duration=20.0, style={color="white", ["font-size"]="20px"}})		
+	Notifications:TopToAll({text=math.floor(RadiantElo), continue=true, style={color="white", ["font-size"]="20px"}})
+	Notifications:TopToAll({text="#addon_dire_avg_rank", continue=true, style={color="white", ["font-size"]="20px"}})
+	Notifications:TopToAll({text=math.floor(DireElo), continue=true, style={color="white", ["font-size"]="20px"}})
+	
+	Notifications:TopToAll({text="#addon_radiant_exp_winrate", continue=true, style={color="white", ["font-size"]="20px"}})
+	Notifications:TopToAll({text=(math.floor(RadiantEXWin*1000)/10).."%", continue=true, style={color="white", ["font-size"]="20px"}})
+	Notifications:TopToAll({text="#addon_dire_exp_winrate", continue=true, style={color="white", ["font-size"]="20px"}})
+	Notifications:TopToAll({text=(math.floor(DireEXWin*1000)/10).."%", continue=true, style={color="white", ["font-size"]="20px"}})
+	
+	Notifications:TopToAll({text="#addon_radiant_rank_change", continue=true, style={color="white", ["font-size"]="20px"}})
+	Notifications:TopToAll({text=(math.floor(RadiantEloDelta*10)/10).."", continue=true, style={color="white", ["font-size"]="20px"}})
+	Notifications:TopToAll({text="#addon_dire_rank_change", continue=true, style={color="white", ["font-size"]="20px"}})
+	Notifications:TopToAll({text=(math.floor(DireEloDelta*10)/10).."", continue=true, style={color="white", ["font-size"]="20px"}})
+	
 end
 
 function CagsGameMode:StorageGet(i)
@@ -310,6 +429,10 @@ function CagsGameMode:StorageGet(i)
 		end
 		if PlayerStorage[i+1]["LastMatch10Point"] == nil then
 			PlayerStorage[i+1]["LastMatch10Point"] = 1
+			--print("LastMatch10Point init")
+		end
+		if PlayerStorage[i+1]["Elo"] == nil then
+			PlayerStorage[i+1]["Elo"] = 1000
 			--print("LastMatch10Point init")
 		end
 		--DeepPrintTable(PlayerStorage[i+1])
@@ -352,12 +475,23 @@ function CagsGameMode:WinStreakBC(i)
 		LastMatch10String = "No Record"
 	end
 	--GameRules:SendCustomMessage("%s1 WinStreak: "..PlayerStorage[i+1]["WinStreak"].."; HighestHistoryWinStreak: "..PlayerStorage[i+1]["WinStreakHistory"], i, 0)
-	Say(PlayerResource:GetPlayer(i),"Win streak: "..PlayerStorage[i+1]["WinStreak"].."; History streak: "..PlayerStorage[i+1]["WinStreakHistory"].."; Last 10 games: "..LastMatch10String, false)     
-  --Notifications:BottomToAll({hero=PlayerResource:GetSelectedHeroName(i), duration=30.0})
-  --Notifications:BottomToAll({text="#addon_winstreak", continue=true, style={["font-size"]="30px"}})
-  --Notifications:BottomToAll({text=PlayerStorage[i+1]["WinStreak"], continue=true, style={["font-size"]="30px"}})
-  --Notifications:BottomToAll({text="#addon_winstreakhistory", continue=true, style={["font-size"]="30px"}})
-  --Notifications:BottomToAll({text=PlayerStorage[i+1]["WinStreakHistory"], continue=true, style={["font-size"]="30px"}})
+	--Say(PlayerResource:GetPlayer(i),"Win streak: "..PlayerStorage[i+1]["WinStreak"].."; History streak: "..PlayerStorage[i+1]["WinStreakHistory"].."; Last 10 games: "..LastMatch10String, false)     
+	Say(PlayerResource:GetPlayer(i),"Rank: "..math.floor(PlayerStorage[i+1]["Elo"]).."; Win streak: "..PlayerStorage[i+1]["WinStreak"].."; History streak: "..PlayerStorage[i+1]["WinStreakHistory"].."; Last 10 games: "..LastMatch10String, false)     
+  
+  Notifications:TopToAll({hero=PlayerResource:GetSelectedHeroName(i), duration=10.0, style={["font-size"]="20px"}})
+  --Notifications:TopToAll({text=PlayerResource:GetPlayerName(i).." ", continue=true, style={["font-size"]="20px"}})
+  
+  Notifications:TopToAll({text="#addon_rank", continue=true, style={["font-size"]="20px"}})
+  Notifications:TopToAll({text=(math.floor(PlayerStorage[i+1]["Elo"])).."", continue=true, style={["font-size"]="20px"}})
+  
+  Notifications:TopToAll({text="#addon_winstreak", continue=true, style={["font-size"]="20px"}})
+  Notifications:TopToAll({text=PlayerStorage[i+1]["WinStreak"].."", continue=true, style={["font-size"]="20px"}})
+  
+  Notifications:TopToAll({text="#addon_winstreak_history", continue=true, style={["font-size"]="20px"}})
+  Notifications:TopToAll({text=PlayerStorage[i+1]["WinStreakHistory"].."", continue=true, style={["font-size"]="20px"}})
+  
+  Notifications:TopToAll({text="#addon_last_ten_games", continue=true, style={["font-size"]="20px"}})
+  Notifications:TopToAll({text=LastMatch10String, continue=true, style={["font-size"]="20px"}})
 end
 
 function CagsGameMode:WinStreakChange(i,flag)
@@ -377,6 +511,13 @@ function CagsGameMode:WinStreakChange(i,flag)
 		PlayerStorage[i+1]["LastMatch10Point"] = PlayerStorage[i+1]["LastMatch10Point"] % 10 + 1
 	end
 	--DeepPrintTable(PlayerStorage[i+1])
+end
+
+function CagsGameMode:EloChange(i,delta)
+	if PlayerStorage[i+1]==nil then
+		return nil
+	end
+	PlayerStorage[i+1]["Elo"] = PlayerStorage[i+1]["Elo"] + delta
 end
 
 function CagsGameMode:OnHeroPicked( event )
@@ -407,6 +548,7 @@ function CagsGameMode:OnHeroPicked( event )
 		playerHero:AddItemByName("item_ultimate_scepter")
 		Druid_Scepter=playerHero:GetItemInSlot(0)
 		playerHero:SetCanSellItems(false)
+		--print(DruidExist)
 	end
 	if heroString =="npc_dota_hero_pudge" then
 		PudgeExist = true
@@ -425,8 +567,10 @@ function CagsGameMode:OnHeroPicked( event )
 end
 
 function CagsGameMode:DruidSellableThink()
-	--print("Druid can sell")
-	DruidHero:SetCanSellItems(true)
+	if DruidExist then
+		--print("Druid can sell")
+		DruidHero:SetCanSellItems(true)
+	end
 	return nil
 end
 
@@ -504,6 +648,7 @@ function CagsGameMode:OnPlayerUseAbility( event )
 	--CagsGameMode:WinStreakChange(0,true)
 	--CagsGameMode:WinStreakChange(0,false)
 	]]
+	
 	local abilityName = event.abilityname
 	local player = PlayerResource:GetPlayer(event.PlayerID)
 	local playerName = (player:GetAssignedHero()):GetUnitName()
@@ -558,19 +703,6 @@ function CagsGameMode:OnEntityHurt( event )
   --print(killed:GetHealthPercent())
   if (((killed:GetUnitName()=="npc_dota_badguys_fort")or(killed:GetUnitName()=="npc_dota_goodguys_fort"))and(killed:GetHealthPercent()<100)and(FinalNotice==false)) then
   	FinalNotice = true
-  	if PudgeExist then
-			--Say(PudgeHero,"Pudge hooks accuracy: "..PudgeHookSuccess.."/"..PudgeHookSum.."="..(math.floor((PudgeHookSuccess/PudgeHookSum)*1000)/10).."%".." (on scoreboard deduct "..PudgeHookSum.." from pudge's deaths)", false) 
-  		Notifications:BottomToAll({text="#addon_pudge_hook_accuracy", duration=60.0, style={["font-size"]="30px"}})				
-  		Notifications:BottomToAll({text=PudgeHookSuccess.."/"..PudgeHookSum.."="..(math.floor((PudgeHookSuccess/PudgeHookSum)*1000)/10).."% ", duration=60.0, continue=true, style={["font-size"]="30px"}})				
-  		Notifications:BottomToAll({text="#addon_pudge_death_deduct_01", duration=60.0, continue=true, style={["font-size"]="30px"}})				
-  		Notifications:BottomToAll({text=PudgeHookSum.." ", duration=60.0, continue=true, style={["font-size"]="30px"}})				
-  		Notifications:BottomToAll({text="#addon_pudge_death_deduct_02", duration=60.0, continue=true, style={["font-size"]="30px"}})
-  	end
-  	if MiranaExist then
-			--Say(MiranaHero,"Mirana arrows accuracy: "..MiranaArrowSuccess.."/"..MiranaArrowSum.."="..(math.floor((MiranaArrowSuccess/MiranaArrowSum)*1000)/10).."%", false)
-  		Notifications:BottomToAll({text="#addon_mirana_arrow_accuracy", duration=60.0, style={["font-size"]="30px"}})				
-  		Notifications:BottomToAll({text=MiranaArrowSuccess.."/"..MiranaArrowSum.."="..(math.floor((MiranaArrowSuccess/MiranaArrowSum)*1000)/10).."%", duration=60.0, continue=true, style={["font-size"]="30px"}})					
-  	end
   	for i = 0, 31 do
 			if (PlayerTeam[i+1]== 2)or(PlayerTeam[i+1]== 3) then
 				CagsGameMode:StorageGet(i)
@@ -629,12 +761,30 @@ function CagsGameMode:OnEntityKilled( event )
 			else
 				killedUnit:SetTimeUntilRespawn(300)		
 			end
+			if _G.AbandonTest[killedUnit:GetPlayerID()+1] then
+  			Notifications:BottomToAll({hero=PlayerResource:GetSelectedHeroName(killedUnit:GetPlayerID()), imagestyle="landscape", duration=10.0})
+  			Notifications:BottomToAll({text="#addon_abandon_and_spectate", continue=true, style={["font-size"]="30px"}})
+				killedUnit:SetTimeUntilRespawn(9999)
+			end
 		end
 		if MeatHookDead == true then
 			PudgeHero:SetTimeUntilRespawn(0)
 		end
 	end
 	if ((killedUnitName=="npc_dota_badguys_fort") or (killedUnitName=="npc_dota_goodguys_fort")) then
+  	if PudgeExist then
+			--Say(PudgeHero,"Pudge hooks accuracy: "..PudgeHookSuccess.."/"..PudgeHookSum.."="..(math.floor((PudgeHookSuccess/PudgeHookSum)*1000)/10).."%".." (on scoreboard deduct "..PudgeHookSum.." from pudge's deaths)", false) 
+  		Notifications:BottomToAll({text="#addon_pudge_hook_accuracy", duration=15.0, style={["font-size"]="30px"}})				
+  		Notifications:BottomToAll({text=PudgeHookSuccess.."/"..PudgeHookSum.."="..(math.floor((PudgeHookSuccess/PudgeHookSum)*1000)/10).."% ", continue=true, style={["font-size"]="30px"}})				
+  		Notifications:BottomToAll({text="#addon_pudge_death_deduct_01", continue=true, style={["font-size"]="30px"}})				
+  		Notifications:BottomToAll({text=PudgeHookSum.." ", continue=true, style={["font-size"]="30px"}})				
+  		Notifications:BottomToAll({text="#addon_pudge_death_deduct_02", continue=true, style={["font-size"]="30px"}})
+  	end
+  	if MiranaExist then
+			--Say(MiranaHero,"Mirana arrows accuracy: "..MiranaArrowSuccess.."/"..MiranaArrowSum.."="..(math.floor((MiranaArrowSuccess/MiranaArrowSum)*1000)/10).."%", false)
+  		Notifications:BottomToAll({text="#addon_mirana_arrow_accuracy", duration=15.0, style={["font-size"]="30px"}})				
+  		Notifications:BottomToAll({text=MiranaArrowSuccess.."/"..MiranaArrowSum.."="..(math.floor((MiranaArrowSuccess/MiranaArrowSum)*1000)/10).."%", continue=true, style={["font-size"]="30px"}})					
+  	end
 		if PudgeExist == true then
 			GameRules:SendCustomMessage("Pudge hooks accuracy: "..PudgeHookSuccess.."/"..PudgeHookSum.."="..(math.floor((PudgeHookSuccess/PudgeHookSum)*1000)/10).."%".." (on scoreboard deduct "..PudgeHookSum.." from pudge's deaths)", 0, 1)
 			--Say(PudgeHero,"Pudge hooks accuracy: "..PudgeHookSuccess.."/"..PudgeHookSum.."="..(math.floor((PudgeHookSuccess/PudgeHookSum)*1000)/10).."%".." (on scoreboard deduct "..PudgeHookSum.." from pudge's deaths)", false)
@@ -648,11 +798,33 @@ function CagsGameMode:OnEntityKilled( event )
 		--print("radiant win")
 		_G.GAME_WINNER_TEAM = "Radiant"
 		if WinStreakRecord then
+
+			if PlayerHostTeam==2 then
+				CagsGameMode:EloChange(PlayerHost,DireEloDeltaSav*5)
+				DeepPrintTable(PlayerStorage[PlayerHost+1])
+				for j = 0, 31 do
+					if PlayerTeam[j+1]==3 then
+						CagsGameMode:EloChange(j,-DireEloDeltaSav)	
+					end			
+				end		
+			elseif PlayerHostTeam==3 then
+				CagsGameMode:EloChange(PlayerHost,RadiantEloDeltaSav*5)
+				DeepPrintTable(PlayerStorage[PlayerHost+1])
+				for j = 0, 31 do
+					if PlayerTeam[j+1]==2 then
+						CagsGameMode:EloChange(j,-RadiantEloDeltaSav)	
+					end			
+				end		
+			end
+			CagsGameMode:EloCalc()
+
 			for i = 0,31 do
 				if PlayerTeam[i+1]==2 then
 					CagsGameMode:WinStreakChange(i,true)
+					CagsGameMode:EloChange(i,RadiantEloDelta)
 				elseif PlayerTeam[i+1]==3 then
 					CagsGameMode:WinStreakChange(i,false)
+					CagsGameMode:EloChange(i,-RadiantEloDelta)
 				end
 			end
 			--WinStreakRecord = false
@@ -661,11 +833,33 @@ function CagsGameMode:OnEntityKilled( event )
 		--print("dire win")
 		_G.GAME_WINNER_TEAM = "Dire"																										
 		if WinStreakRecord then
+
+			if PlayerHostTeam==2 then
+				CagsGameMode:EloChange(PlayerHost,DireEloDeltaSav*5)
+				DeepPrintTable(PlayerStorage[PlayerHost+1])
+				for j = 0, 31 do
+					if PlayerTeam[j+1]==3 then
+						CagsGameMode:EloChange(j,-DireEloDeltaSav)	
+					end			
+				end		
+			elseif PlayerHostTeam==3 then
+				CagsGameMode:EloChange(PlayerHost,RadiantEloDeltaSav*5)
+				DeepPrintTable(PlayerStorage[PlayerHost+1])
+				for j = 0, 31 do
+					if PlayerTeam[j+1]==2 then
+						CagsGameMode:EloChange(j,-RadiantEloDeltaSav)	
+					end			
+				end		
+			end
+			CagsGameMode:EloCalc()
+
 			for i = 0,31 do
 				if PlayerTeam[i+1]==2 then
 					CagsGameMode:WinStreakChange(i,false)
+					CagsGameMode:EloChange(i,-DireEloDelta)
 				elseif PlayerTeam[i+1]==3 then
 					CagsGameMode:WinStreakChange(i,true)
+					CagsGameMode:EloChange(i,DireEloDelta)
 				end
 			end
 			--WinStreakRecord = false
@@ -673,8 +867,13 @@ function CagsGameMode:OnEntityKilled( event )
 	end
 end
 
-function CagsGameMode:GetWinTeam()
-	return WinTeam
+function CagsGameMode:OnPlayerSay( event )
+	--DeepPrintTable(event)
+	--print(PlayerResource:GetPlayerName(event.userid-1))
+	--GameRules:SendCustomMessage("debug: "..event.userid,0,0)
+	if event.text=="-abandon" then
+		
+	end
 end
 
 function CagsGameMode:OnScoreChanged(event)

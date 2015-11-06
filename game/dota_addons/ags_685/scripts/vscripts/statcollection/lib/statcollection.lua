@@ -268,7 +268,8 @@ function statCollection:sendStage1()
             hostSteamID = -1
         end
     end
-
+		--_G.HOST_STEAM_ID = firstConnectedSteamID
+    --print(_G.HOST_STEAM_ID)
     -- Workout if the server is dedicated or not
     local isDedicated = (IsDedicatedServer() and 1) or 0
     statCollection:setFlags({dedi = isDedicated})

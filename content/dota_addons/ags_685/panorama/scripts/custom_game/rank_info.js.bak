@@ -1,0 +1,7 @@
+function OpenMyUI() {
+         GameEvents.SendCustomGameEventToServer( "myui_open", {} );
+}
+
+function ToggleMyUI() {
+         GameEvents.SendCustomGameEventToServer( "myui_open", {} );
+}

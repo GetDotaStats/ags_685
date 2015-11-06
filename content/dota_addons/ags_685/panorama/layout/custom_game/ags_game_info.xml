@@ -20,6 +20,9 @@
 			<Label id="TipText03" class="TipText" html="true" text="#addon_game_info_tips_03" />
 			<Label id="TipText04" class="TipText" html="true" text="#addon_game_info_tips_04" />
 			<Label id="TipText05" class="TipText" html="true" text="#addon_game_info_tips_05" />
+			<Label id="TipText06" class="TipText" html="true" text="#addon_game_info_tips_06" />
+			<Label id="TipText07" class="TipText" html="true" text="#addon_game_info_tips_07" />
+			<Label id="TipText08" class="TipText" html="true" text="#addon_game_info_tips_08" />
 		</Panel>
 	</Panel>
 </root>
