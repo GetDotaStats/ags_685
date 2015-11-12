@@ -5,7 +5,7 @@ function customSchema:init()
     -- Check the schema_examples folder for different implementations
 
     -- Flag Example
-     statCollection:setFlags({version = _G.AGS_VERSION})
+    statCollection:setFlags({version = _G.AGS_VERSION})
 
     -- Listen for changes in the current state
     ListenToGameEvent('game_rules_state_change', function(keys)
@@ -41,9 +41,9 @@ end
 -- Returns a table with our custom game tracking.
 function BuildGameArray()
     local game = {}
-    	game.len = math.floor(GameRules:GetGameTime())
-			game.win = _G.GAME_WINNER_TEAM
+
     -- Add game values here as game.someValue = GetSomeGameValue()
+    game.gw = _G.GAME_WINNER_TEAM		-- winning team
 
     return game
 end
@@ -56,30 +56,36 @@ function BuildPlayersArray()
             if not PlayerResource:IsBroadcaster(playerID) then
 
                 local hero = PlayerResource:GetSelectedHeroEntity(playerID)
-								local heroTeam = PlayerResource:GetTeam(playerID)
-								local heroTeamStr = ""
-								if heroTeam == 2 then
-									heroTeamStr = "Radiant"
-								elseif heroTeam == 3 then
-									heroTeamStr = "Dire"
-								end
-								--print(heroTeam)
-								--print(heroTeamStr)
+                
+                local heroTeam = PlayerResource:GetTeam(playerID)
+                local heroTeamStr = ""
+                if heroTeam == 2 then
+                	heroTeamStr = "Radiant"
+                elseif heroTeam == 3 then
+                	heroTeamStr = "Dire"
+                end
+
                 table.insert(players, {
                     -- steamID32 required in here
                     steamID32 = PlayerResource:GetSteamAccountID(playerID),
-										nam= GetHeroName(playerID),	-- Hero by its short name
-										lvl = hero:GetLevel(),			-- Hero level at the end of the game
-										pnw = GetNetworth(hero),		-- Sum of hero gold and item worth
-										pt = heroTeamStr,				-- Team this hero belongs to
-										pk = hero:GetKills(),			-- Number of kills of this players hero
-										pa = hero:GetAssists(),			-- Number of deaths of this players hero
-										pd = hero:GetDeaths(),			-- Number of deaths of this players hero
-										pil = GetItemList(hero)			-- Item list
 
                     -- Example functions for generic stats are defined in statcollection/lib/utilities.lua
                     -- Add player values here as someValue = GetSomePlayerValue(),
-
+                    ph= GetHeroName(playerID),		-- Hero by its short name
+                    pt = heroTeamStr,			-- Team this hero belongs to
+                    pl = hero:GetLevel(),		-- Hero level at the end of the game
+                    pnw = GetNetworth(hero),		-- Sum of hero gold and item worth
+                    pk = hero:GetKills(),		-- Number of kills of this players hero
+                    pa = hero:GetAssists(),		-- Number of deaths of this players hero
+                    pd = hero:GetDeaths(),		-- Number of deaths of this players hero
+                    
+                    -- Item list
+                    is1 = GetItemSlot(hero,0),
+                    is2 = GetItemSlot(hero,1),
+                    is3 = GetItemSlot(hero,2),
+                    is4 = GetItemSlot(hero,3),
+                    is5 = GetItemSlot(hero,4),
+                    is6 = GetItemSlot(hero,5)
                 })
             end
         end
